@@ -28,13 +28,15 @@ class _LoginPagesState extends State<LoginPages> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    _emailController.text = 'mik@gmail.com';
-    _passwordController.text = '111111';
+    // _emailController.text = 'mik@gmail.com';
+    // _passwordController.text = '111111';
     //     _emailController.text = 'test@gmail.com';
     // _passwordController.text = '123456';
     //     _emailController.text = 'snack@gmail.com';
     // _passwordController.text = '666666';
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +89,7 @@ class _LoginPagesState extends State<LoginPages> {
       ),
     );
   }
+
 
   // Email field with validation
   Widget _buildEmailField() {
@@ -254,7 +257,6 @@ class _LoginPagesState extends State<LoginPages> {
       Get.snackbar("เข้าสู่ระบบไม่สำเร็จ", "คุณเข้าสู่ระบบไม่สำเร็จโปรดลองอีกครั้ง");
     }
   }
-
 
 
   // Register function
