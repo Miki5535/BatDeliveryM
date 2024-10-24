@@ -523,7 +523,7 @@ class _ProfileuserPagesState extends State<ProfileuserPages> {
 
   void logout() {
     storageF.erase();
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const LoginPages()),
     );

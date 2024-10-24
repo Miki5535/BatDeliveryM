@@ -266,51 +266,53 @@ class _UserReceiverPagesState extends State<UserReceiverPages>
                   children: [
                     // First tab: Search Page
                     Column(
+  children: [
+    Expanded(
+      child: receiverall.isNotEmpty
+          ? ListView.builder(
+              itemCount: receiverall.length,
+              itemBuilder: (context, index) {
+                var receiver = receiverall[index];
+                return Card(
+                  margin: EdgeInsets.all(10),
+                  child: ListTile(
+                    title: Text('Receiver : ${index + 1}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                            child: ListView.builder(
-                          itemCount: receiverall.length,
-                          itemBuilder: (context, index) {
-                            var receiver = receiverall[index];
-                            return Card(
-                              margin: EdgeInsets.all(10),
-                              child: ListTile(
-                                title: Text('Receiver : ${index + 1}'),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('ผู้ส่ง : ${receiver['sendername']}'),
-                                    Text('เบอร์ผู้ส่ง : ${receiver['phone']}'),
-                                    Text('สถานะ : ${receiver['status']}'),
-                                    Text('รายละเอียด : ${receiver['detail']}'),
-                                    if (receiver['status'] ==
-                                        'รอยืนยันการส่งงาน')
-                                      Padding(
-                                        padding:
-                                            const EdgeInsets.only(top: 8.0),
-                                        child: FilledButton(
-                                          onPressed: () {
-                                            statussubmit(
-                                                '${receiver['order_id']}',
-                                                '${receiver['rider']}');
-                                          },
-                                          style: ButtonStyle(
-                                            backgroundColor:
-                                                WidgetStateProperty.all<Color>(
-                                                    Colors.green),
-                                          ),
-                                          child: Text('ยืนยัน'),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                leading: Image.network(receiver['photosender']),
+                        Text('ผู้ส่ง : ${receiver['sendername']}'),
+                        Text('เบอร์ผู้ส่ง : ${receiver['phone']}'),
+                        Text('สถานะ : ${receiver['status']}'),
+                        Text('รายละเอียด : ${receiver['detail']}'),
+                        if (receiver['status'] == 'รอยืนยันการส่งงาน')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: FilledButton(
+                              onPressed: () {
+                                statussubmit('${receiver['order_id']}', '${receiver['rider']}');
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(Colors.green),
                               ),
-                            );
-                          },
-                        )),
+                              child: Text('ยืนยัน'),
+                            ),
+                          ),
                       ],
                     ),
+                    leading: Image.network(receiver['photosender']),
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Text('ไม่มีรายการผู้รับในขณะนี้', style: TextStyle(fontSize: 18)),
+            ),
+    ),
+  ],
+),
+
+                    
+                    
                     // Second tab: Map Page
                     SizedBox(
                       width: double.infinity,

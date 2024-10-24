@@ -372,7 +372,7 @@ class _ProfileriderPagesState extends State<ProfileriderPages> {
 
   void logout() {
     storageF.erase();
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const LoginPages()),
     );

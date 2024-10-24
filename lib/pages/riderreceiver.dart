@@ -553,7 +553,7 @@ Widget MapAll() {
         PolylineLayer(
           polylines: [
             // ถ้าสถานะเป็น "กำลังส่ง" จะแสดงเฉพาะเส้นเชื่อมระหว่างตำแหน่งปัจจุบันกับผู้รับ
-            if (status == "กำลังส่ง" && currentLocation != null && receiverLocation != null)
+            if (status == "กำลังส่ง"||status == "รอยืนยันการส่งงาน" && currentLocation != null && receiverLocation != null)
               Polyline(
                 points: [currentLocation!, receiverLocation!],
                 color: Colors.blue,

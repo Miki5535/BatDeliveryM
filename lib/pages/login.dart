@@ -43,6 +43,8 @@ class _LoginPagesState extends State<LoginPages> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 174, 63, 194),
         elevation: 0,
+        automaticallyImplyLeading: false,
+        
       ),
       body: SingleChildScrollView(
         child: Padding(
