@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lotto/pages/profilerider.dart';
 import 'package:lotto/pages/ridermain.dart';
+import 'dart:async';
 
 class RiderReceiverPages extends StatefulWidget {
   const RiderReceiverPages({super.key});
@@ -53,6 +54,9 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
   String? picS;
   String? status;
 
+  Timer? _locationTimer; // เพิ่มตัวแปรสำหรับ Timer
+  LatLng? _previousLocation; // เพิ่มตัวแปรเก็บตำแหน่งก่อนหน้า
+
 
   @override
   void dispose() {
@@ -65,6 +69,7 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     initializeDB();
+    _startLocationTracking();
   }
 
   void _onItemTapped(int index) {
@@ -98,13 +103,13 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
 
     await loadData();
     await _loadFirebaseImage();
-    // await getCurrentLocation();
+    await getCurrentLocation();
     await readOderRider();
       
-  currentLocation= LatLng(16.251206403638957, 103.23923616148686);
+  // currentLocation= LatLng(16.251206403638957, 103.23923616148686);
   }
 
-    Future<void> getCurrentLocation() async {
+Future<void> getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -114,12 +119,27 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
 
-      setState(() {
-        currentPosition = position;
-        currentLocation = LatLng(position.latitude, position.longitude);
-      });
+      // สร้างตำแหน่งใหม่
+      LatLng newLocation = LatLng(position.latitude, position.longitude);
+
+      // ตรวจสอบว่าตำแหน่งเปลี่ยนแปลงหรือไม่
+      if (_previousLocation != newLocation) {
+        String order = orderrider[0]['order_id'];
+        log('$order');
+        log('GPS เปลี่ยนแปลง:');
+        log('ตำแหน่งก่อนหน้า: ${_previousLocation?.latitude ?? "ไม่มี"}, ${_previousLocation?.longitude ?? "ไม่มี"}');
+        log('ตำแหน่งใหม่: ${newLocation.latitude}, ${newLocation.longitude}');
+        
+        await db.collection('Order').doc(order).update({'pointX': position.latitude,'pointY': position.latitude});
+
+        setState(() {
+          currentPosition = position;
+          currentLocation = newLocation;
+          _previousLocation = newLocation; 
+        });
+      }
     } catch (e) {
-      log('Error getting location: $e');
+      log('เกิดข้อผิดพลาดในการรับตำแหน่ง GPS: $e');
     }
   }
 
@@ -736,5 +756,14 @@ Widget MapAll() {
   );
 }
 
+ void _startLocationTracking() {
+    // ติดตาม GPS ทุก 5 วินาที
+    _locationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      getCurrentLocation();
+    });
+  }
+
 
 }
+
+

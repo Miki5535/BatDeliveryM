@@ -83,8 +83,8 @@ class _RiderMainPagesState extends State<RiderMainPages> {
     log('readAllOder');
     await _loadFirebaseImage();
     log('_loadFirebaseImage');
-    // getCurrentLocation();
-    currentLocation = LatLng(16.251206403638957, 103.23923616148686);
+    getCurrentLocation();
+    // currentLocation = LatLng(16.251206403638957, 103.23923616148686);
   }
 
 
@@ -107,6 +107,8 @@ class _RiderMainPagesState extends State<RiderMainPages> {
       log('Error getting location: $e');
     }
   }
+
+
 
   Future<void> loadData() async {
     userId = storageF.read('userId');
@@ -317,6 +319,7 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                 Text('เบอร์ผู้รับ: ${work['receiverphone']}'),
                 Text('รายละเอียด: ${work['detail']}'),
                 SizedBox(height: 10),
+                
                 SizedBox(
                   width: double.infinity,
                   height: 250.0,
@@ -384,6 +387,8 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                     ),
                   ),
                 ),
+              
+              
               ],
             ),
           ),
@@ -446,6 +451,7 @@ class _RiderMainPagesState extends State<RiderMainPages> {
         if (currentLocation != null)
           MarkerLayer(
             markers: [
+              
               Marker(
                 point: currentLocation!,
                 width: 50,
@@ -489,6 +495,9 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                   ],
                 ),
               ),
+            
+            
+            
             ],
           ),
 
@@ -625,6 +634,8 @@ class _RiderMainPagesState extends State<RiderMainPages> {
           const SnackBar(content: Text('รอสักครู่ กำลังรับตำแหน่ง GPS')));
     }
   }
+
+
 
   Future<void> acceptOrder(String orderId) async {
     try {
