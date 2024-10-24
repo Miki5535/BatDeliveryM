@@ -212,33 +212,41 @@ class _RiderMainPagesState extends State<RiderMainPages> {
           child: Column(
             children: [
               Expanded(
-                child: ListView.builder(
-                  itemCount: workrall.length,
-                  itemBuilder: (context, index) {
-                    var work = workrall[index];
-                    return Card(
-                      margin: EdgeInsets.all(10),
-                      child: ListTile(
-                        title: Text('Work : ${index + 1}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('ผู้ส่ง : ${work['sendername']}'),
-                            Text('ผู้รับ : ${work['receivername']}'),
-                            Text('เบอร์ผู้ส่ง : ${work['senderphone']}'),
-                            Text('เบอร์ผู้รับ : ${work['receiverphone']}'),
-                            Text('รายละเอียด : ${work['detail']}'),
-                          ],
-                        ),
-                        leading: Image.network(work['photosender']),
-                        onTap: () {
-                          workdailog(work);
-                        },
-                      ),
-                    );
-                  },
+  child: workrall.isNotEmpty
+      ? ListView.builder(
+          itemCount: workrall.length,
+          itemBuilder: (context, index) {
+            var work = workrall[index];
+            return Card(
+              margin: EdgeInsets.all(10),
+              child: ListTile(
+                title: Text('Work : ${index + 1}'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('ผู้ส่ง : ${work['sendername']}'),
+                    Text('ผู้รับ : ${work['receivername']}'),
+                    Text('เบอร์ผู้ส่ง : ${work['senderphone']}'),
+                    Text('เบอร์ผู้รับ : ${work['receiverphone']}'),
+                    Text('รายละเอียด : ${work['detail']}'),
+                  ],
                 ),
-              )
+                leading: Image.network(work['photosender']),
+                onTap: () {
+                  workdailog(work);
+                },
+              ),
+            );
+          },
+        )
+      : Center(
+          child: Text(
+            'ยังไม่มีงานที่สามารถรับได้',
+            style: TextStyle(fontSize: 18, color: const Color.fromARGB(255, 0, 0, 0)),
+          ),
+        ),
+),
+
 
               // Bottom Navigation Bar
             ],

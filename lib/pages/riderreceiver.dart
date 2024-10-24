@@ -109,7 +109,8 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
   // currentLocation= LatLng(16.251206403638957, 103.23923616148686);
   }
 
-Future<void> getCurrentLocation() async {
+
+  Future<void> getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -119,29 +120,74 @@ Future<void> getCurrentLocation() async {
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
 
-      // สร้างตำแหน่งใหม่
-      LatLng newLocation = LatLng(position.latitude, position.longitude);
-
-      // ตรวจสอบว่าตำแหน่งเปลี่ยนแปลงหรือไม่
-      if (_previousLocation != newLocation) {
-        String order = orderrider[0]['order_id'];
-        log('$order');
-        log('GPS เปลี่ยนแปลง:');
-        log('ตำแหน่งก่อนหน้า: ${_previousLocation?.latitude ?? "ไม่มี"}, ${_previousLocation?.longitude ?? "ไม่มี"}');
-        log('ตำแหน่งใหม่: ${newLocation.latitude}, ${newLocation.longitude}');
-        
-        await db.collection('Order').doc(order).update({'pointX': position.latitude,'pointY': position.longitude});
-
-        setState(() {
-          currentPosition = position;
-          currentLocation = newLocation;
-          _previousLocation = newLocation; 
-        });
-      }
+      setState(() {
+        currentPosition = position;
+        currentLocation = LatLng(position.latitude, position.longitude);
+      });
     } catch (e) {
-      log('เกิดข้อผิดพลาดในการรับตำแหน่ง GPS: $e');
+      log('Error getting location: $e');
     }
   }
+
+
+
+Future<void> getCurrentLocation2() async {
+    try {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high);
+
+  // สร้างตำแหน่งใหม่
+  LatLng newLocation = LatLng(position.latitude, position.longitude);
+
+  // ตรวจสอบว่าตำแหน่งเปลี่ยนแปลงหรือไม่
+  if (_previousLocation != newLocation) {
+    // ตรวจสอบว่าลิสต์ orderrider มีข้อมูลหรือไม่
+    if (orderrider.isNotEmpty) {
+      String order = orderrider[0]['order_id'];
+      log('$order');
+      
+      log('GPS เปลี่ยนแปลง:');
+      log('ตำแหน่งก่อนหน้า: ${_previousLocation?.latitude ?? "ไม่มี"}, ${_previousLocation?.longitude ?? "ไม่มี"}');
+      log('ตำแหน่งใหม่: ${newLocation.latitude}, ${newLocation.longitude}');
+
+      // คำนวณระยะทางถ้ามีตำแหน่งก่อนหน้า
+      if (_previousLocation != null) {
+        double distanceInMeters = Geolocator.distanceBetween(
+          _previousLocation!.latitude,
+          _previousLocation!.longitude,
+          newLocation.latitude,
+          newLocation.longitude
+        );
+        log('ระยะทางที่เปลี่ยนแปลง: ${distanceInMeters.toStringAsFixed(2)} เมตร');
+      }
+
+      // อัปเดตข้อมูลในฐานข้อมูล
+      await db.collection('Order').doc(order).update({
+        'pointX': position.latitude,
+        'pointY': position.longitude
+      });
+
+      setState(() {
+        currentPosition = position;
+        currentLocation = newLocation;
+        _previousLocation = newLocation; 
+      });
+    } else {
+      log('ไม่มีข้อมูล orderrider');
+    }
+  }
+} catch (e) {
+  log('เกิดข้อผิดพลาดในการรับตำแหน่ง GPS: $e');
+}
+
+  }
+
+
 
   Future<void> loadData() async {
     userId = storageF.read('userId');
@@ -300,13 +346,16 @@ Future<void> getCurrentLocation() async {
                               ),
                       ),
                     ]),
-                                    SizedBox(
-                                width: double
-                                    .infinity, 
-                                height: 300.0, 
-                                child:
-                                    MapAll(), 
-                              )
+                    SizedBox(
+  width: double.infinity,
+  height: 300.0,
+  child: (currentLocation != null || senderLocation != null || receiverLocation != null)
+      ? MapAll()
+      : Center(
+          child: Text('ไม่สามารถแสดงแผนที่ได้เนื่องจากตำแหน่งไม่พร้อม'),
+        ),
+)
+
                   ],
                 ),
               ),
@@ -557,6 +606,8 @@ Future<void> getCurrentLocation() async {
           const SnackBar(content: Text('รอสักครู่ กำลังรับตำแหน่ง GPS')));
     }
   }
+
+
 Widget MapAll() {
   return Scaffold(
     body: FlutterMap(
@@ -756,10 +807,12 @@ Widget MapAll() {
   );
 }
 
+
+
  void _startLocationTracking() {
     // ติดตาม GPS ทุก 5 วินาที
     _locationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      getCurrentLocation();
+      getCurrentLocation2();
     });
   }
 

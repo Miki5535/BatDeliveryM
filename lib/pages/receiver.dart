@@ -9,6 +9,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lotto/pages/profileuser.dart';
 import 'package:lotto/pages/sender.dart';
+import 'package:lotto/shared/appdata.dart';
+import 'package:provider/provider.dart';
 
 class UserReceiverPages extends StatefulWidget {
   const UserReceiverPages({super.key});
@@ -56,9 +58,30 @@ class _UserReceiverPagesState extends State<UserReceiverPages>
   }
 
   Future<void> initializeDB() async {
+    await startRealtimeOrder();
     await loadData();
     await readAllreceiver();
     await _loadFirebaseImage();
+  }
+
+  Future<void> startRealtimeOrder() async {
+    final docRef = db.collection("Order");
+
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+      log('Listener Stop');
+    }
+
+    context.read<AppData>().listener = docRef.snapshots().listen(
+      (event) {
+        readAllreceiver();
+        // var data = event.data();
+        log('Order LT'); 
+        // log("current data: ${event.data()}");
+      },
+      onError: (error) => log("Listen failed: $error"),
+    );
   }
 
   Future<void> loadData() async {
