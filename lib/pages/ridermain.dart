@@ -600,6 +600,8 @@ class _RiderMainPagesState extends State<RiderMainPages> {
     );
   }
 
+
+
   void _zoomIn() {
     if (currentLocation != null) {
       final currentZoom = mapController.zoom;

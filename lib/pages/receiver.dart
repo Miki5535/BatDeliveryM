@@ -17,10 +17,10 @@ class UserReceiverPages extends StatefulWidget {
   State<UserReceiverPages> createState() => _UserReceiverPagesState();
 }
 
-class _UserReceiverPagesState extends State<UserReceiverPages> with SingleTickerProviderStateMixin {
+class _UserReceiverPagesState extends State<UserReceiverPages>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 2;
   late TabController _tabController; // Add TabController
-
 
   final storageF = GetStorage();
   var db = FirebaseFirestore.instance;
@@ -40,28 +40,25 @@ class _UserReceiverPagesState extends State<UserReceiverPages> with SingleTicker
   List<Map<String, dynamic>> receiverall = [];
 
   LatLng? point1;
-       List<LatLng> points = [];
+  List<LatLng> points = [];
 
-   List<String> ridernumber = [];
-   List<LatLng> riderPoints = [];
-     List<String> ridernames = [];
-       LatLng? currentLocation;
-         List<Map<String, dynamic>> senderall = [];
-
-
-
+  List<String> ridernumber = [];
+  List<LatLng> riderPoints = [];
+  List<String> ridernames = [];
+  LatLng? currentLocation;
+  List<Map<String, dynamic>> senderall = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this); 
+    _tabController = TabController(length: 2, vsync: this);
     initializeDB();
   }
 
-    Future<void> initializeDB() async {
+  Future<void> initializeDB() async {
     await loadData();
     await readAllreceiver();
-    await _loadFirebaseImage() ;
+    await _loadFirebaseImage();
   }
 
   Future<void> loadData() async {
@@ -96,100 +93,98 @@ class _UserReceiverPagesState extends State<UserReceiverPages> with SingleTicker
     }
   }
 
-Future<void> readAllreceiver() async {
-  var filteredOrders = await db.collection('Order')
-  .where('receiver', isEqualTo: userId)
-  .get();
-  var result = filteredOrders.docs.where((doc) => doc['status'] != 'ส่งแล้ว').toList();
-  List<Map<String, dynamic>> tempSenderList = [];
-  List<LatLng> pointsadd = [];
-  List<String> ridernumberadd = [];
-  List<LatLng> riderPointsAdd = []; 
+  Future<void> readAllreceiver() async {
+    var filteredOrders =
+        await db.collection('Order').where('receiver', isEqualTo: userId).get();
+    var result =
+        filteredOrders.docs.where((doc) => doc['status'] != 'ส่งแล้ว').toList();
+    List<Map<String, dynamic>> tempSenderList = [];
+    List<LatLng> pointsadd = [];
+    List<String> ridernumberadd = [];
+    List<LatLng> riderPointsAdd = [];
 
-  List<String> ridernamesadd=[];
-  
-  for (var doc in result) {
-    double pointX = doc['pointX'] ?? 0.0;
-    double pointY = doc['pointY'] ?? 0.0;
-    if (pointX != 0.0 && pointY != 0.0) {
-      riderPointsAdd.add(LatLng(pointX, pointY));
-      ridernamesadd.add(doc['rider']);
-      
-    }
+    List<String> ridernamesadd = [];
 
-    String imageUrlr = '';
-    var result2 = await db.collection('User').doc(doc['sender']).get();
-    
-    try {
-      if (doc['photosender'] != null) {
-        imageUrlr = await storage
-            .ref('/order/${doc['photosender']}')
-            .getDownloadURL();
+    for (var doc in result) {
+      double pointX = doc['pointX'] ?? 0.0;
+      double pointY = doc['pointY'] ?? 0.0;
+      if (pointX != 0.0 && pointY != 0.0) {
+        riderPointsAdd.add(LatLng(pointX, pointY));
+        ridernamesadd.add(doc['rider']);
       }
-    } catch (e) {
-      log('Failed to load image: $e');
-      imageUrlr = ''; 
-    }
 
-    String senderName = result2.data()?['name']?.toString() ?? 'Unknown'; 
-    String senderphone = result2.data()?['phone']?.toString() ?? 'Unknown';
-    String? senderpic = result2.data()?['pic']?.toString();
-    
-    double receiverlatitude = 0.0;
-    double receiverlongitude = 0.0;
-    
-    try {
-      receiverlatitude = double.parse(result2.data()?['latitude']?.toString() ?? '0.0');
-      receiverlongitude = double.parse(result2.data()?['longitude']?.toString() ?? '0.0');
-    } catch (e) {
-      log('Error parsing coordinates: $e');
-    }
-    
-    String senderPicUrl = '';
-    if (senderpic != null && senderpic.isNotEmpty) {
+      String imageUrlr = '';
+      var result2 = await db.collection('User').doc(doc['sender']).get();
+
       try {
-        senderPicUrl = await storage.ref('/uploads/$senderpic').getDownloadURL();
+        if (doc['photosender'] != null) {
+          imageUrlr = await storage
+              .ref('/order/${doc['photosender']}')
+              .getDownloadURL();
+        }
       } catch (e) {
-        log('Failed to load receiver pic: $e');
-        senderPicUrl = ''; 
+        log('Failed to load image: $e');
+        imageUrlr = '';
+      }
+
+      String senderName = result2.data()?['name']?.toString() ?? 'Unknown';
+      String senderphone = result2.data()?['phone']?.toString() ?? 'Unknown';
+      String? senderpic = result2.data()?['pic']?.toString();
+
+      double receiverlatitude = 0.0;
+      double receiverlongitude = 0.0;
+
+      try {
+        receiverlatitude =
+            double.parse(result2.data()?['latitude']?.toString() ?? '0.0');
+        receiverlongitude =
+            double.parse(result2.data()?['longitude']?.toString() ?? '0.0');
+      } catch (e) {
+        log('Error parsing coordinates: $e');
+      }
+
+      String senderPicUrl = '';
+      if (senderpic != null && senderpic.isNotEmpty) {
+        try {
+          senderPicUrl =
+              await storage.ref('/uploads/$senderpic').getDownloadURL();
+        } catch (e) {
+          log('Failed to load receiver pic: $e');
+          senderPicUrl = '';
+        }
+      }
+
+      if (receiverlatitude != 0.0 && receiverlongitude != 0.0) {
+        pointsadd.add(LatLng(receiverlatitude, receiverlongitude));
+        ridernumberadd.add(senderName);
+
+        // log('$senderPicUrl');
+
+        tempSenderList.add({
+          'order_id': doc.id,
+          'createAt': doc['createAt'],
+          'detail': doc['detail'] ?? '',
+          'photosender': imageUrlr,
+          'sendername': senderName,
+          'rider': doc['rider'] ?? '',
+          'status': doc['status'] ?? '',
+          'sender': doc['sender'] ?? '',
+          'phone': senderphone,
+          'picR': senderPicUrl,
+          'latitude': receiverlatitude,
+          'longitude': receiverlongitude,
+        });
       }
     }
 
-
-
-    if (receiverlatitude != 0.0 && receiverlongitude != 0.0) {
-      pointsadd.add(LatLng(receiverlatitude, receiverlongitude));
-      ridernumberadd.add(senderName);
-
-      // log('$senderPicUrl');
-      
-      tempSenderList.add({
-        'order_id': doc.id,
-        'createAt': doc['createAt'],
-        'detail': doc['detail'] ?? '',
-        'photosender': imageUrlr,
-        'sendername': senderName,
-        'rider': doc['rider'] ?? '',
-        'status': doc['status'] ?? '',
-        'sender': doc['sender'] ?? '', 
-        'phone': senderphone, 
-        'picR': senderPicUrl,
-        'latitude': receiverlatitude,
-        'longitude': receiverlongitude,
-      });
-    }
+    setState(() {
+      receiverall = tempSenderList;
+      points = pointsadd;
+      ridernumber = ridernumberadd;
+      riderPoints = riderPointsAdd;
+      ridernames = ridernamesadd;
+    });
   }
-
-  setState(() {
-    receiverall = tempSenderList;
-    points = pointsadd;
-    ridernumber = ridernumberadd;
-    riderPoints = riderPointsAdd; 
-    ridernames = ridernamesadd;
-  });
-}
- 
- 
 
   Future<void> _loadFirebaseImage() async {
     try {
@@ -272,7 +267,6 @@ Future<void> readAllreceiver() async {
                     // First tab: Search Page
                     Column(
                       children: [
-
                         Expanded(
                             child: ListView.builder(
                           itemCount: receiverall.length,
@@ -281,7 +275,7 @@ Future<void> readAllreceiver() async {
                             return Card(
                               margin: EdgeInsets.all(10),
                               child: ListTile(
-                                title: Text('Receiver : ${index+1}'),
+                                title: Text('Receiver : ${index + 1}'),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -289,20 +283,25 @@ Future<void> readAllreceiver() async {
                                     Text('เบอร์ผู้ส่ง : ${receiver['phone']}'),
                                     Text('สถานะ : ${receiver['status']}'),
                                     Text('รายละเอียด : ${receiver['detail']}'),
-                                     
-                                    if (receiver['status'] == 'รอยืนยันการส่งงาน') 
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: FilledButton(
-                        onPressed: () {
-                          statussubmit('${receiver['order_id']}','${receiver['rider']}'); 
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(Colors.green),
-                        ),
-                        child: Text('ยืนยัน'),
-                      ),
-                    ),
+                                    if (receiver['status'] ==
+                                        'รอยืนยันการส่งงาน')
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: FilledButton(
+                                          onPressed: () {
+                                            statussubmit(
+                                                '${receiver['order_id']}',
+                                                '${receiver['rider']}');
+                                          },
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                WidgetStateProperty.all<Color>(
+                                                    Colors.green),
+                                          ),
+                                          child: Text('ยืนยัน'),
+                                        ),
+                                      ),
                                   ],
                                 ),
                                 leading: Image.network(receiver['photosender']),
@@ -314,12 +313,10 @@ Future<void> readAllreceiver() async {
                     ),
                     // Second tab: Map Page
                     SizedBox(
-                                width: double
-                                    .infinity, 
-                                height: 300.0, 
-                                child:
-                                    MapAll(), 
-                              )
+                      width: double.infinity,
+                      height: 300.0,
+                      child: MapAll(),
+                    )
                   ],
                 ),
               ),
@@ -385,58 +382,191 @@ Future<void> readAllreceiver() async {
     super.dispose();
   }
 
-Widget MapAll() {
-  return Scaffold(
-    body: FlutterMap(
-      mapController: mapController,
-      options: MapOptions(
-        center: currentLocation ?? point1 ?? LatLng(0, 0),
-        zoom: 16.0,
+  Widget MapAll() {
+    return Scaffold(
+      body: FlutterMap(
+        mapController: mapController,
+        options: MapOptions(
+          center: currentLocation ?? point1 ?? LatLng(0, 0),
+          zoom: 16.0,
+        ),
+        children: [
+          TileLayer(
+            urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            subdomains: const ['a', 'b', 'c'],
+          ),
+          PolylineLayer(
+            polylines: _buildPolylines(),
+          ),
+          if (_firebaseImageUrl != null && point1 != null)
+            _buildMarker(point1!, _firebaseImageUrl!),
+          ..._buildMarkersWithReceiverPics(),
+          ..._buildRiderMarkers(), // Add rider markers
+        ],
       ),
-      children: [
-        TileLayer(
-          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-          subdomains: const ['a', 'b', 'c'],
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: _zoomIn,
+            child: const Icon(Icons.add),
+            tooltip: 'Zoom In',
+          ),
+          const SizedBox(height: 10),
+          FloatingActionButton(
+            onPressed: _zoomOut,
+            child: const Icon(Icons.remove),
+            tooltip: 'Zoom Out',
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<MarkerLayer> _buildRiderMarkers() {
+    return riderPoints.asMap().entries.map((entry) {
+      int index = entry.key;
+      var point = entry.value;
+      String riderName = ridernames.isNotEmpty && index < ridernames.length
+          ? ridernames[index]
+          : 'Unknown';
+
+      return MarkerLayer(
+        markers: [
+          Marker(
+            point: point,
+            height: 100,
+            width: 60,
+            builder: (ctx) => SizedBox(
+              width: 60,
+              height: 100,
+              child: Column(
+                children: [
+                  Container(
+                    width: 60,
+                    color: Colors.white,
+                    child: Center(
+                      child: Text(
+                        riderName, // ใช้ riderName ที่ได้จาก ridernames
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  ClipOval(
+                    child: Container(
+                      width: 60,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                      ),
+                      child: 'assets/images/riderpic.png'.isNotEmpty
+                          ? Image.asset(
+                              'assets/images/riderpic.png',
+                              width: 40,
+                              height: 40,
+                            )
+                          : const Icon(Icons.person, size: 40),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }).toList();
+  }
+
+  MarkerLayer _buildMarker(LatLng point, String url) {
+    return MarkerLayer(
+      markers: [
+        Marker(
+          point: point,
+          width: 50,
+          height: 80, // เพิ่มความสูงเพื่อให้มีที่สำหรับข้อความ
+          builder: (ctx) => Stack(
+            // alignment: Alignment.bottomLeft,
+            children: [
+              Positioned(
+                top: 0,
+                child: Text(
+                  'คุณ',
+                  style: TextStyle(
+                    color: const Color.fromARGB(255, 0, 0, 0),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    backgroundColor: const Color.fromARGB(255, 255, 255, 255)
+                        .withOpacity(0.7),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 15,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: url != null
+                      ? ClipOval(
+                          child: Image.network(
+                            url,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : const Icon(Icons.person, size: 40, color: Colors.grey),
+                ),
+              ),
+            ],
+          ),
         ),
-        PolylineLayer(
-          polylines: _buildPolylines(),
-        ),
-        if (_firebaseImageUrl != null && point1 != null)
-          _buildMarker(point1!, _firebaseImageUrl!),
-        ..._buildMarkersWithReceiverPics(),
-        ..._buildRiderMarkers(), // Add rider markers
       ],
-    ),
-    floatingActionButton: Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        FloatingActionButton(
-          onPressed: _zoomIn,
-          child: const Icon(Icons.add),
-          tooltip: 'Zoom In',
-        ),
-        const SizedBox(height: 10),
-        FloatingActionButton(
-          onPressed: _zoomOut,
-          child: const Icon(Icons.remove),
-          tooltip: 'Zoom Out',
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
+  List<Polyline> _buildPolylines() {
+    List<Polyline> polylines = [];
+    for (LatLng point in points) {
+      polylines.add(Polyline(
+        points: [point1!, point],
+        color: Colors.blue,
+        strokeWidth: 4.0,
+      ));
+    }
+    if (currentLocation != null) {
+      polylines.add(Polyline(
+        points: [point1!, currentLocation!],
+        color: Colors.blue,
+        strokeWidth: 4.0,
+      ));
+    }
+    return polylines;
+  }
 
+  List<MarkerLayer> _buildMarkersWithReceiverPics() {
+    return points.asMap().entries.map((entry) {
+      int index = entry.key;
+      LatLng point = entry.value;
+      String riderNumber =
+          index < ridernumber.length ? ridernumber[index] : 'Unknown';
+      String receiverPic =
+          index < receiverall.length ? receiverall[index]['picR'] ?? '' : '';
+      // log('$receiverPic');
 
+      return _buildImageMarkerWithPic(point, receiverPic, riderNumber);
+    }).toList();
+  }
 
-List<MarkerLayer> _buildRiderMarkers() {
-  return riderPoints.asMap().entries.map((entry) {
-    int index = entry.key;
-    var point = entry.value;
-    String riderName = ridernames.isNotEmpty && index < ridernames.length
-        ? ridernames[index]
-        : 'Unknown'; 
-
+  MarkerLayer _buildImageMarkerWithPic(
+      LatLng point, String imageUrl, String riderNumber) {
     return MarkerLayer(
       markers: [
         Marker(
@@ -449,11 +579,11 @@ List<MarkerLayer> _buildRiderMarkers() {
             child: Column(
               children: [
                 Container(
-                  width: 60,
+                  width: 40,
                   color: Colors.white,
                   child: Center(
                     child: Text(
-                      riderName, // ใช้ riderName ที่ได้จาก ridernames
+                      riderNumber,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black,
@@ -465,16 +595,24 @@ List<MarkerLayer> _buildRiderMarkers() {
                 ),
                 ClipOval(
                   child: Container(
-                    width: 60,
+                    width: 40,
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.black,
+                        width: 2,
+                      ),
                     ),
-                    child: 'assets/images/riderpic.png'.isNotEmpty
-                        ? Image.asset(
-                            'assets/images/riderpic.png',
+                    child: imageUrl.isNotEmpty
+                        ? Image.network(
+                            imageUrl,
                             width: 40,
                             height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Icon(Icons.person, size: 40);
+                            },
                           )
                         : const Icon(Icons.person, size: 40),
                   ),
@@ -485,156 +623,7 @@ List<MarkerLayer> _buildRiderMarkers() {
         ),
       ],
     );
-  }).toList();
-}
-
-
-  MarkerLayer _buildMarker(LatLng point, String url) {
-    return MarkerLayer(
-            markers: [
-              Marker(
-                point: point,
-                width: 50,
-                height: 80, // เพิ่มความสูงเพื่อให้มีที่สำหรับข้อความ
-                builder: (ctx) => Stack(
-                  // alignment: Alignment.bottomLeft,
-                  children: [
-                    Positioned(
-                      top: 0,
-                      child: Text(
-                        'คุณ',
-                        style: TextStyle(
-                          color: const Color.fromARGB(255, 0, 0, 0),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 15,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.blue,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child:  url != null
-                            ? ClipOval(
-                                child: Image.network(
-                                  url,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Icon(Icons.person,
-                                size: 40, color: Colors.grey),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
   }
-
-
-
-
-  List<Polyline> _buildPolylines() {
-    List<Polyline> polylines = [];
-    for (LatLng point in points) {
-      polylines.add(Polyline(
-        points: [point1!, point], 
-        color: Colors.blue,
-        strokeWidth: 4.0,
-      ));
-    }
-    if (currentLocation != null) {
-      polylines.add(Polyline(
-        points: [
-          point1!,
-          currentLocation!
-        ], 
-        color: Colors.blue,
-        strokeWidth: 4.0,
-      ));
-    }
-    return polylines;
-  }
-
-List<MarkerLayer> _buildMarkersWithReceiverPics() {
-  return points.asMap().entries.map((entry) {
-    int index = entry.key;
-    LatLng point = entry.value;
-    String riderNumber = index < ridernumber.length ? ridernumber[index] : 'Unknown';
-    String receiverPic = index < receiverall.length ? receiverall[index]['picR'] ?? '' : '';
-    // log('$receiverPic');
-
-    return _buildImageMarkerWithPic(point, receiverPic, riderNumber);
-  }).toList();
-}
-
-MarkerLayer _buildImageMarkerWithPic(LatLng point, String imageUrl, String riderNumber) {
-  return MarkerLayer(
-    markers: [
-      Marker(
-        point: point,
-        height: 100,
-        width: 60,
-        builder: (ctx) => SizedBox(
-          width: 60,
-          height: 100,
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                color: Colors.white,
-                child: Center(
-                  child: Text(
-                    riderNumber,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-              ClipOval(
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.black,
-                      width: 2,
-                    ),
-                  ),
-                  child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.person, size: 40);
-                          },
-                        )
-                      : const Icon(Icons.person, size: 40),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
 
   void _zoomIn() {
     final currentZoom = mapController.zoom;
@@ -649,26 +638,14 @@ MarkerLayer _buildImageMarkerWithPic(LatLng point, String imageUrl, String rider
       mapController.move(point1!, currentZoom - zoomIncrement);
     }
   }
-  
-  Future<void> statussubmit(String id,String rider) async {
+
+  Future<void> statussubmit(String id, String rider) async {
     log('$id');
-    await db
-          .collection('Order')
-          .doc(id)
-          .update({'status': 'ส่งแล้ว'});
+    await db.collection('Order').doc(id).update({'status': 'ส่งแล้ว'});
 
-              await db
-          .collection('Rider')
-          .doc(rider)
-          .update({'status': 'ว่าง'});
-
+    await db.collection('Rider').doc(rider).update({'status': 'ว่าง'});
 
     readAllreceiver();
     Get.snackbar("ยืนยันการส่งงานแล้ว", "คุณได้ยืนยันการส่งงานจากไรเดอร์แล้วว");
-
   }
-
-
-
-
 }

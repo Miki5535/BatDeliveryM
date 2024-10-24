@@ -200,6 +200,7 @@ var result = filteredOrders.docs.where((doc) => doc['status'] != 'ส่งแ�
       ridernumberadd.add(receiverName);
       
       tempSenderList.add({
+        'order_id': doc.id,
         'createAt': doc['createAt'],
         'detail': doc['detail'] ?? '',
         'photosender': imageUrlr,
@@ -330,8 +331,27 @@ var result = filteredOrders.docs.where((doc) => doc['status'] != 'ส่งแ�
                                     Text('โทรศัพทร์ผู้รับ : ${sender['phone']}'),
                                     Text('ไรเดอร์ : ${sender['rider']}'),
                                     Text('สถานะ : ${sender['status']}'),
-                                     Text('รายละเอียด : ${sender['detail']}'),
+                                    Text('รายละเอียด : ${sender['detail']}'),
                                      
+                                     if (sender['status'] ==
+                                        'ไรเดอร์รับงานแล้ว')
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: FilledButton(
+                                          onPressed: () {
+                                            statussubmit(
+                                                '${sender['order_id']}',
+                                                '${sender['rider']}');
+                                          },
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                WidgetStateProperty.all<Color>(
+                                                    Colors.green),
+                                          ),
+                                          child: Text('ยืนยัน'),
+                                        ),
+                                      ),
                                     
                                   ],
                                 ),
@@ -1086,6 +1106,15 @@ MarkerLayer _buildImageMarkerWithPic(LatLng point, String imageUrl, String rider
     ],
   );
 }
+  Future<void> statussubmit(String id, String rider) async {
+    log('$id');
+    await db.collection('Order').doc(id).update({'status': 'กำลังส่ง'});
+
+    // await db.collection('Rider').doc(rider).update({'status': 'ว่าง'});
+
+    readAllsender();
+    Get.snackbar("ยืนยันการจัดส่งแล้ว", "คุณได้ยืนยันการจัดส่งสินค้าให้กับไรเดอร์แล้วว");
+  }
 
 
 }

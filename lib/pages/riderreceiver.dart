@@ -45,6 +45,14 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
 
   List<Map<String, dynamic>> orderrider = [];
   XFile? selectedImage;
+  
+  LatLng? currentLocation;
+  LatLng? senderLocation;
+  LatLng? receiverLocation;
+  String? picR;
+  String? picS;
+  String? status;
+
 
   @override
   void dispose() {
@@ -87,11 +95,32 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
   }
 
   Future<void> initializeDB() async {
+
     await loadData();
     await _loadFirebaseImage();
+    // await getCurrentLocation();
     await readOderRider();
+      
+  currentLocation= LatLng(16.251206403638957, 103.23923616148686);
+  }
 
-    // currentPosition = LatLng(16.251206403638957, 103.23923616148686);
+    Future<void> getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      setState(() {
+        currentPosition = position;
+        currentLocation = LatLng(position.latitude, position.longitude);
+      });
+    } catch (e) {
+      log('Error getting location: $e');
+    }
   }
 
   Future<void> loadData() async {
@@ -251,12 +280,13 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
                               ),
                       ),
                     ]),
-                    const Center(
-                      child: Text(
-                        'แผนที่ Rider ที่กำลังมาส่ง',
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    ),
+                                    SizedBox(
+                                width: double
+                                    .infinity, 
+                                height: 300.0, 
+                                child:
+                                    MapAll(), 
+                              )
                   ],
                 ),
               ),
@@ -322,10 +352,15 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
 
     var result =
         filteredOrders.docs.where((doc) => doc['status'] != 'ส่งแล้ว').toList();
+
     List<Map<String, dynamic>> tempSenderList = [];
-    List<LatLng> pointsadd = [];
+    LatLng? point1add ;
+    LatLng? point2add ;
     List<String> ridernumberadd = [];
     List<LatLng> riderPointsAdd = [];
+          String receiverPicUrl = '';
+      String senderPicUrl = '';
+      String statusadd = '';
 
     List<String> ridernamesadd = [];
     for (var doc in result) {
@@ -360,20 +395,25 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
       String senderphone = result3.data()?['phone']?.toString() ?? 'Unknown';
       String? senderpic = result3.data()?['pic']?.toString();
 
-      double receiverlatitude = 0.0;
-      double receiverlongitude = 0.0;
+      double Rlatitude = 0.0;
+      double Rlongitude = 0.0;
+      double Slatitude = 0.0;
+      double Slongitude = 0.0;
 
       try {
-        receiverlatitude =
+        Rlatitude =
             double.parse(result2.data()?['latitude']?.toString() ?? '0.0');
-        receiverlongitude =
+        Rlongitude =
             double.parse(result2.data()?['longitude']?.toString() ?? '0.0');
+            Slatitude =
+            double.parse(result3.data()?['latitude']?.toString() ?? '0.0');
+        Slongitude =
+            double.parse(result3.data()?['longitude']?.toString() ?? '0.0');
       } catch (e) {
         log('Error parsing coordinates: $e');
       }
 
-      String receiverPicUrl = '';
-      String senderPicUrl = '';
+
       if (receiverpic != null && receiverpic.isNotEmpty) {
         try {
           receiverPicUrl =
@@ -386,9 +426,11 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
         }
       }
 
-      if (receiverlatitude != 0.0 && receiverlongitude != 0.0) {
-        pointsadd.add(LatLng(receiverlatitude, receiverlongitude));
+      if (Rlatitude != 0.0 && Rlongitude != 0.0 && Slatitude != 0.0 && Slongitude != 0.0) {
+        point1add = LatLng(Rlatitude, Rlongitude);
+        point2add = LatLng(Slatitude, Slongitude);
         ridernumberadd.add(receiverName);
+        statusadd = doc['status'];
 
         tempSenderList.add({
           'order_id': doc.id,
@@ -402,20 +444,23 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
           'status': doc['status'] ?? '',
           'sender': doc['sender'] ?? '',
           'phone': receiverphone,
-          'picR': receiverPicUrl,
-          'picS': senderPicUrl,
-          'latitude': receiverlatitude,
-          'longitude': receiverlongitude,
+
         });
       }
     }
 
+
     setState(() {
       orderrider = tempSenderList;
-      // points = pointsadd;
-      // ridernumber = ridernumberadd;
-      // riderPoints = riderPointsAdd;
-      // ridernames = ridernamesadd;
+      receiverLocation = point1add;
+      senderLocation = point2add;
+      log('$receiverLocation');
+      log('$senderLocation');
+      picR = receiverPicUrl;
+      picS = senderPicUrl;
+      status = statusadd;
+      log('$status');
+
     });
   }
 
@@ -469,7 +514,227 @@ class _RiderReceiverPagesState extends State<RiderReceiverPages>
     return 'order-${maxNumber + 1}';
   }
 
+  void _zoomIn() {
+    if (currentLocation != null) {
+      final currentZoom = mapController.zoom;
+      if (currentZoom < maxZoom) {
+        mapController.move(currentLocation!, currentZoom + zoomIncrement);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('รอสักครู่ กำลังรับตำแหน่ง GPS')));
+    }
+  }
 
+  void _zoomOut() {
+    if (currentLocation != null) {
+      final currentZoom = mapController.zoom;
+      if (currentZoom > minZoom) {
+        mapController.move(currentLocation!, currentZoom - zoomIncrement);
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('รอสักครู่ กำลังรับตำแหน่ง GPS')));
+    }
+  }
+Widget MapAll() {
+  return Scaffold(
+    body: FlutterMap(
+      mapController: mapController,
+      options: MapOptions(
+        center: currentLocation ?? senderLocation ?? LatLng(0, 0),
+        zoom: 16.0,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          subdomains: const ['a', 'b', 'c'],
+        ),
+        PolylineLayer(
+          polylines: [
+            // ถ้าสถานะเป็น "กำลังส่ง" จะแสดงเฉพาะเส้นเชื่อมระหว่างตำแหน่งปัจจุบันกับผู้รับ
+            if (status == "กำลังส่ง" && currentLocation != null && receiverLocation != null)
+              Polyline(
+                points: [currentLocation!, receiverLocation!],
+                color: Colors.blue,
+                strokeWidth: 3.0,
+              )
+            // ถ้าไม่ใช่สถานะ "กำลังส่ง" จะแสดงเส้นเชื่อมทั้ง 3 จุด
+            else if (currentLocation != null && senderLocation != null && receiverLocation != null) ...[
+              Polyline(
+                points: [currentLocation!, senderLocation!],
+                color: Colors.green,
+                strokeWidth: 3.0,
+              ),
+              Polyline(
+                points: [senderLocation!, receiverLocation!],
+                color: Colors.red,
+                strokeWidth: 3.0,
+              ),
+            ],
+          ],
+        ),
+        MarkerLayer(
+          markers: [
+            // Marker ตำแหน่งปัจจุบัน
+            if (currentLocation != null)
+                            Marker(
+                point: currentLocation!,
+                width: 50,
+                height: 80, // เพิ่มความสูงเพื่อให้มีที่สำหรับข้อความ
+                builder: (ctx) => Stack(
+                  // alignment: Alignment.bottomLeft,
+                  children: [
+                    Positioned(
+                      top: 0,
+                      child: Text(
+                        'คุณ',
+                        style: TextStyle(
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 15,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _firebaseImageUrl != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  _firebaseImageUrl!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Icon(Icons.person,
+                                size: 40, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            
+            // Marker ผู้ส่ง (แสดงเฉพาะเมื่อไม่ใช่สถานะ "กำลังส่ง")
+            if (senderLocation != null && status != "กำลังส่ง")
+              Marker(
+                point: senderLocation!,
+                width: 50,
+                height: 80, // เพิ่มความสูงเพื่อให้มีที่สำหรับข้อความ
+                builder: (ctx) => Stack(
+                  // alignment: Alignment.bottomLeft,
+                  children: [
+                    Positioned(
+                      top: 0,
+                      child: Text(
+                        'ผู้ส่ง',
+                        style: TextStyle(
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 15,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: picS != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  picS!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Icon(Icons.person,
+                                size: 40, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Marker ผู้รับ
+            if (receiverLocation != null)
+              Marker(
+                point: receiverLocation!,
+                width: 50,
+                height: 80, // เพิ่มความสูงเพื่อให้มีที่สำหรับข้อความ
+                builder: (ctx) => Stack(
+                  // alignment: Alignment.bottomLeft,
+                  children: [
+                    Positioned(
+                      top: 0,
+                      child: Text(
+                        'ผู้รับ',
+                        style: TextStyle(
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 15,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: picR != null
+                            ? ClipOval(
+                                child: Image.network(
+                                  picR!,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                            : const Icon(Icons.person,
+                                size: 40, color: Colors.grey),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ],
+    ),
+    floatingActionButton: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        FloatingActionButton(
+          onPressed: _zoomIn,
+          child: const Icon(Icons.add),
+          tooltip: 'Zoom In',
+        ),
+        const SizedBox(height: 10),
+        FloatingActionButton(
+          onPressed: _zoomOut,
+          child: const Icon(Icons.remove),
+          tooltip: 'Zoom Out',
+        ),
+      ],
+    ),
+  );
+}
 
 
 }
