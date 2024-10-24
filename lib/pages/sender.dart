@@ -11,6 +11,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lotto/pages/profileuser.dart';
 import 'package:lotto/pages/receiver.dart';
+import 'package:provider/provider.dart';
+
+import '../shared/appdata.dart';
 
 class Senderpages extends StatefulWidget {
   const Senderpages({super.key});
@@ -66,6 +69,7 @@ class _SenderpagesState extends State<Senderpages>
   }
 
   Future<void> initializeDB() async {
+    await startRealtimeOrder();
     await loadData();
     await _loadFirebaseImage();
     await readAllUsers();
@@ -78,7 +82,6 @@ class _SenderpagesState extends State<Senderpages>
     email = storageF.read('email');
     phone = storageF.read('phone');
     pic = storageF.read('pic');
-    // log('$name');
 
     // ตรวจสอบค่าที่อ่านมาจาก storage ว่าไม่เป็น null
     final latitudeString = storageF.read('latitude');
@@ -104,6 +107,8 @@ class _SenderpagesState extends State<Senderpages>
     }
   }
 
+
+
   Future<void> readAllUsers() async {
     var result = await db.collection('User').get();
     setState(() {
@@ -120,6 +125,26 @@ class _SenderpagesState extends State<Senderpages>
         };
       }).toList();
     });
+  }
+
+  Future<void> startRealtimeOrder() async {
+    final docRef = db.collection("Order");
+
+    if (context.read<AppData>().listener != null) {
+      context.read<AppData>().listener!.cancel();
+      context.read<AppData>().listener = null;
+      log('Listener Stop');
+    }
+
+    context.read<AppData>().listener = docRef.snapshots().listen(
+      (event) {
+        readAllsender();
+        // var data = event.data();
+        log('Order LT'); 
+        // log("current data: ${event.data()}");
+      },
+      onError: (error) => log("Listen failed: $error"),
+    );
   }
 
 Future<void> readAllsender() async {

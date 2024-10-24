@@ -130,7 +130,7 @@ Future<void> getCurrentLocation() async {
         log('ตำแหน่งก่อนหน้า: ${_previousLocation?.latitude ?? "ไม่มี"}, ${_previousLocation?.longitude ?? "ไม่มี"}');
         log('ตำแหน่งใหม่: ${newLocation.latitude}, ${newLocation.longitude}');
         
-        await db.collection('Order').doc(order).update({'pointX': position.latitude,'pointY': position.latitude});
+        await db.collection('Order').doc(order).update({'pointX': position.latitude,'pointY': position.longitude});
 
         setState(() {
           currentPosition = position;
