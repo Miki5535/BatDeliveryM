@@ -87,8 +87,6 @@ class _RiderMainPagesState extends State<RiderMainPages> {
     currentLocation = LatLng(16.251206403638957, 103.23923616148686);
   }
 
-
-
   Future<void> getCurrentLocation() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
@@ -116,8 +114,6 @@ class _RiderMainPagesState extends State<RiderMainPages> {
     pic = storageF.read('pic');
   }
 
-
-
   Future<void> _loadFirebaseImage() async {
     try {
       if (pic != null) {
@@ -130,8 +126,6 @@ class _RiderMainPagesState extends State<RiderMainPages> {
       print('Failed to load image: $e');
     }
   }
-
-
 
   Future<void> readAllOder() async {
     var result =
@@ -195,6 +189,20 @@ class _RiderMainPagesState extends State<RiderMainPages> {
     });
   }
 
+  bool isLoading = false; // ตัวแปรสำหรับเช็คสถานะการโหลด
+
+  Future<void> _refreshData() async {
+    setState(() {
+      isLoading = true; // เริ่มการโหลด
+    });
+
+    await readAllOder(); // ดึงข้อมูลใหม่
+
+    setState(() {
+      isLoading = false; // หยุดการโหลด
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -207,39 +215,47 @@ class _RiderMainPagesState extends State<RiderMainPages> {
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: workrall.length,
-                  itemBuilder: (context, index) {
-                    var work = workrall[index];
-                    return Card(
-                      margin: EdgeInsets.all(10),
-                      child: ListTile(
-                        title: Text('Work : ${index + 1}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('ผู้ส่ง : ${work['sendername']}'),
-                            Text('ผู้รับ : ${work['receivername']}'),
-                            Text('เบอร์ผู้ส่ง : ${work['senderphone']}'),
-                            Text('เบอร์ผู้รับ : ${work['receiverphone']}'),
-                            Text('รายละเอียด : ${work['detail']}'),
-                          ],
-                        ),
-                        leading: Image.network(work['photosender']),
-                        onTap: () {
-                          workdailog(work);
-                        },
-                      ),
-                    );
-                  },
+          child: RefreshIndicator(
+            onRefresh: _refreshData, // ฟังก์ชันที่เรียกใช้เมื่อมีการรีเฟรช
+            child: Column(
+              children: [
+                Expanded(
+                  child:
+                      isLoading // แสดง CircularProgressIndicator ถ้ากำลังโหลด
+                          ? Center(child: CircularProgressIndicator())
+                          : ListView.builder(
+                              itemCount: workrall.length,
+                              itemBuilder: (context, index) {
+                                var work = workrall[index];
+                                return Card(
+                                  margin: EdgeInsets.all(10),
+                                  child: ListTile(
+                                    title: Text('Work : ${index + 1}'),
+                                    subtitle: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text('ผู้ส่ง : ${work['sendername']}'),
+                                        Text(
+                                            'ผู้รับ : ${work['receivername']}'),
+                                        Text(
+                                            'เบอร์ผู้ส่ง : ${work['senderphone']}'),
+                                        Text(
+                                            'เบอร์ผู้รับ : ${work['receiverphone']}'),
+                                        Text('รายละเอียด : ${work['detail']}'),
+                                      ],
+                                    ),
+                                    leading: Image.network(work['photosender']),
+                                    onTap: () {
+                                      workdailog(work);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                 ),
-              )
-
-              // Bottom Navigation Bar
-            ],
+              ],
+            ),
           ),
         ),
         bottomNavigationBar: ClipRRect(
@@ -461,7 +477,9 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                           color: const Color.fromARGB(255, 0, 0, 0),
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                          backgroundColor:
+                              const Color.fromARGB(255, 255, 255, 255)
+                                  .withOpacity(0.7),
                         ),
                       ),
                     ),
@@ -494,7 +512,6 @@ class _RiderMainPagesState extends State<RiderMainPages> {
 
         // Sender Marker
         if (point1 != null)
-         
           MarkerLayer(
             markers: [
               Marker(
@@ -512,7 +529,9 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                           color: const Color.fromARGB(255, 0, 0, 0),
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                          backgroundColor:
+                              const Color.fromARGB(255, 255, 255, 255)
+                                  .withOpacity(0.7),
                         ),
                       ),
                     ),
@@ -542,11 +561,10 @@ class _RiderMainPagesState extends State<RiderMainPages> {
               ),
             ],
           ),
-        
+
         // Receiver Marker
-       
+
         if (receiverpoint != null)
-         
           MarkerLayer(
             markers: [
               Marker(
@@ -564,7 +582,9 @@ class _RiderMainPagesState extends State<RiderMainPages> {
                           color: const Color.fromARGB(255, 0, 0, 0),
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
-                          backgroundColor: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.7),
+                          backgroundColor:
+                              const Color.fromARGB(255, 255, 255, 255)
+                                  .withOpacity(0.7),
                         ),
                       ),
                     ),
@@ -594,8 +614,6 @@ class _RiderMainPagesState extends State<RiderMainPages> {
               ),
             ],
           ),
-        
-      
       ],
     );
   }
@@ -631,17 +649,19 @@ class _RiderMainPagesState extends State<RiderMainPages> {
       String currentStatus = riderSnapshot['status'];
 
       if (currentStatus != 'ว่าง') {
-            Get.snackbar("ไม่สามารถรับงานได้", "คุณยังทำงานไม่เสร็จ ไม่สามารถรับงานได้ในขณะนี้");
-            Navigator.pop(context);
-        return; 
+        Get.snackbar("ไม่สามารถรับงานได้",
+            "คุณยังทำงานไม่เสร็จ ไม่สามารถรับงานได้ในขณะนี้");
+        Navigator.pop(context);
+        return;
       }
 
       log('${currentLocation!.latitude}');
-      await db
-          .collection('Order')
-          .doc(orderId)
-          .update({'rider': userId, 'status': 'ไรเดอร์รับงานแล้ว','pointX': currentLocation!.latitude, 'pointY': currentLocation!.longitude});
-
+      await db.collection('Order').doc(orderId).update({
+        'rider': userId,
+        'status': 'ไรเดอร์รับงานแล้ว',
+        'pointX': currentLocation!.latitude,
+        'pointY': currentLocation!.longitude
+      });
 
       await db.collection('Rider').doc(userId).update({'status': 'รับงานแล้ว'});
 
@@ -656,6 +676,4 @@ class _RiderMainPagesState extends State<RiderMainPages> {
           const SnackBar(content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่')));
     }
   }
-
-
 }
